@@ -35,16 +35,16 @@ const startServer = async () => {
                 console.error(err)
             }
         })
-    })
 
-    ws.on("error", (err) => {
-        console.log("WebSocket error occurred", err);
-        ws.controller?.abort();
-    })
+        ws.on("error", (err) => {
+            console.log("WebSocket error occurred", err);
+            ws.controller?.abort();
+        })
 
-    ws.on("close", () => {
-        console.log("🔴 Client disconnected");
-        ws.controller?.abort();
+        ws.on("close", () => {
+            console.log("🔴 Client disconnected");
+            ws.controller?.abort();
+        })
     })
 
     console.log("🚀 WS Server running on 8080");
