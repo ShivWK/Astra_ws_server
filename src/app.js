@@ -70,10 +70,7 @@ startServer()
 //   console.log("🔴 Disconnected");
 // };
 
-// () => {
-//   console.log("🔴 Disconnected");
-// }
-// VM359:3 ✅ Connected to WS
+
 // ws.send(JSON.stringify({
 //   type: "text_message",
 //   message: "Hello, take my interview",

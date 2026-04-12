@@ -1,7 +1,13 @@
-export async function streamOpenRouter({ model, prompt, onChunk, onError, onEnd }) {
+export function streamOpenRouter({ model, prompt, onChunk, onError, onEnd }) {
   const controller = new AbortController();
+  let reader = null;
+  let hasEnded = false;
 
   (async () => {
+    controller.signal.addEventListener("abort", () => {
+      console.log("🛑 Abort signal received");
+    });
+
     try {
       const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
@@ -17,13 +23,12 @@ export async function streamOpenRouter({ model, prompt, onChunk, onError, onEnd 
         signal: controller.signal,
       });
 
-      // pre-stream error
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err?.error?.message || "OpenRouter API failed");
       }
 
-      const reader = res.body?.getReader();
+      reader = res.body?.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
 
@@ -42,13 +47,15 @@ export async function streamOpenRouter({ model, prompt, onChunk, onError, onEnd 
 
           if (!line || line.startsWith(":")) continue;
 
-          // mid-stream error
           if (line.startsWith("data: ")) {
             const data = line.slice(6);
 
             if (data === "[DONE]") {
-              onEnd?.();
-              break;
+              if (!hasEnded) {
+                hasEnded = true;
+                onEnd?.();
+              }
+              return;
             }
 
             try {
@@ -56,22 +63,33 @@ export async function streamOpenRouter({ model, prompt, onChunk, onError, onEnd 
               const content = parsed.choices?.[0]?.delta?.content;
 
               if (content) onChunk(content);
-            } catch {}
+            } catch { }
           }
         }
       }
 
-      onEnd?.();
+      if (!hasEnded) {
+        hasEnded = true;
+        onEnd?.();
+      }
     } catch (err) {
       if (err.name === "AbortError") {
         console.log("🛑 Aborted");
+        if (!hasEnded) {
+          hasEnded = true;
+          onEnd?.();
+        }
       } else {
         onError?.(err);
       }
     } finally {
-      reader.cancel()
+      if (reader) {
+        try {
+          await reader.cancel();
+        } catch { }
+      }
     }
-  })()
+  })().catch(() => { }) // sallow unhandled rejection
 
   return controller;
 }

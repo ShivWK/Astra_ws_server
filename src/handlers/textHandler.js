@@ -40,7 +40,7 @@ const textHandler = async (data, ws) => {
         agent,
 
         onChunk: (chunk) => {
-            fullResponse += chunk + " ";
+            fullResponse += chunk;
 
             ws.send(JSON.stringify({
                 type: "ai_stream",
@@ -49,20 +49,19 @@ const textHandler = async (data, ws) => {
         },
 
         onEnd: async () => {
-            if (isAborted) return;
+            if (!isAborted) {
+                const finalResponse = fullResponse.trim() ||
+                    "Something went wrong. Please try again.";
 
-            const finalResponse = fullResponse
-                .replace(/\s+/g, " ")
-                .replace(/\n\s+/g, "\n")
-                .trim() || "Something went wrong. Please try again.";
+                console.log("Saving AI response:", fullResponse);
 
-            console.log("Saving AI response:", fullResponse);
+                await saveMessage({
+                    conversationId,
+                    role: "assistant",
+                    content: finalResponse,
+                })
+            }
 
-            await saveMessage({
-                conversationId,
-                role: "assistant",
-                content: finalResponse,
-            })
 
             ws.send(JSON.stringify({ type: "ai_end" }))
         },
@@ -82,7 +81,12 @@ const textHandler = async (data, ws) => {
             isAborted = true;
             controller.abort();
         }
+
+        // throws error that file:///C:/Users/user/Desktop/Astra_WS_Server/src/handlers/textHandler.js:83
+        // controller.abort();
+        // TypeError: controller.abort is not a function
     };
 }
+
 
 export default textHandler;

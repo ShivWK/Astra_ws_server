@@ -10,7 +10,7 @@ function resolveModel(modelKey) {
       return { provider: "openrouter", model_id: "google/gemma-3-27b-it:free" };
 
     case "logic":
-      return { provider: "openrouter", model_id: "qwen/qwen3.6-plus:free" };
+      return { provider: "openrouter", model_id: "z-ai/glm-4.5-air:free" };
 
     case "conversational":
       return { provider: "openrouter", model_id: "arcee-ai/trinity-large-preview:free" };
