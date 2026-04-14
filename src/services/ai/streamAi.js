@@ -36,9 +36,11 @@ const streamAi = ({
 
     if (model.provider === "groq") {
         return streamGroq({
+            model: model.model_id,
             prompt,
             onChunk,
-            onEnd: () => { },
+            onError,
+            onEnd,
         })
     }
 }

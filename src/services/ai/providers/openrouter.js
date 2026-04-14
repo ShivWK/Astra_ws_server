@@ -4,10 +4,6 @@ export function streamOpenRouter({ model, prompt, onChunk, onError, onEnd }) {
   let hasEnded = false;
 
   (async () => {
-    controller.signal.addEventListener("abort", () => {
-      console.log("🛑 Abort signal received");
-    });
-
     try {
       const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
@@ -73,7 +69,7 @@ export function streamOpenRouter({ model, prompt, onChunk, onError, onEnd }) {
         onEnd?.();
       }
     } catch (err) {
-      if (err.name === "AbortError") {
+      if (err instanceof Error && err.name === "AbortError") {
         console.log("🛑 Aborted");
         if (!hasEnded) {
           hasEnded = true;
