@@ -1,4 +1,4 @@
-import { ConversationModel } from "../../models/conversation.model";
+import { ConversationModel } from "../../models/conversation.model.js";
 
 async function updateConversation(id) {
     const updatedConversation =  await ConversationModel.findByIdAndUpdate(id, {
