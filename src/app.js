@@ -50,30 +50,4 @@ const startServer = async () => {
     console.log("🚀 WS Server running on 8080");
 }
 
-startServer()
-
-//  testing
-// const ws = new WebSocket("ws://localhost:8080");
-// ws.onopen = () => {
-//   console.log("✅ Connected to WS");
-// };
-
-// ws.onmessage = (event) => {
-//   console.log("📩 Server:", event.data);
-// };
-
-// ws.onerror = (err) => {
-//   console.error("❌ Error:", err);
-// };
-
-// ws.onclose = () => {
-//   console.log("🔴 Disconnected");
-// };
-
-
-// ws.send(JSON.stringify({
-//   type: "text_message",
-//   message: "Hello, take my interview",
-//   conversationId: '69d65f873eab605cddba16e2'
-// }));
-
+startServer();

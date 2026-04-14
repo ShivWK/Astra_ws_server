@@ -38,7 +38,10 @@ const conversationSchema = new mongoose.Schema({
     default: Date.now,
   },
 
-  updatedAt: Date,
+  updatedAt:{
+    type: Date,
+    default: Date.now,
+  },
 });
 
 conversationSchema.index({ userId: 1 });

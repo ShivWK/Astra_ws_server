@@ -1,6 +1,7 @@
 import { ConversationModel } from "../models/conversation.model.js";
 import { UserAgentsModel } from "../models/userAgent.model.js";
 import streamAi from "../services/ai/streamAi.js";
+import updateConversation from "../services/conversation/updateConversation.js";
 import getHistory from "../services/message/getHistory.js";
 import { saveMessage } from "../services/message/saveMessage.js";
 
@@ -60,6 +61,8 @@ const textHandler = async (data, ws) => {
                     role: "assistant",
                     content: finalResponse,
                 })
+
+                await updateConversation(conversationId);
             }
 
 
