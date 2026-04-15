@@ -15,7 +15,7 @@ function resolveModel(modelKey) {
     case "powerful":
       return {
         provider: "gemini",
-        model_id: "gemini-1.5-flash",
+        model_id: "gemini-flash-latest",
       };
 
     case "logic":

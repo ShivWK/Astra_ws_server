@@ -65,7 +65,6 @@ const textHandler = async (data, ws) => {
                 await updateConversation(conversationId);
             }
 
-
             ws.send(JSON.stringify({ type: "ai_end" }))
         },
 
@@ -84,10 +83,6 @@ const textHandler = async (data, ws) => {
             isAborted = true;
             controller.abort();
         }
-
-        // throws error that file:///C:/Users/user/Desktop/Astra_WS_Server/src/handlers/textHandler.js:83
-        // controller.abort();
-        // TypeError: controller.abort is not a function
     };
 }
 

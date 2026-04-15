@@ -51,3 +51,6 @@ const startServer = async () => {
 }
 
 startServer();
+
+
+// https://generativelanguage.googleapis.com/v1beta/models?key=AIzaSyAGEXynJ9W02cgOShHgLQ2etN1FdmgJWlw
