@@ -2,9 +2,6 @@ import { TEXT_MODEL_FALLBACK_MAP } from "../../utils/constant.js";
 import { geminiPromptBuilder } from "./geminiPromptBuidler.js";
 import resolveModel from "./modelResolver.js"
 import promptBuilder from "./promptBuilder.js";
-import { streamGemini } from "./providers/gemini.js";
-import { streamGroq } from "./providers/groq.js";
-import { streamOpenRouter } from "./providers/openrouter.js";
 import { runProvider } from "./providers/providerRunnner.js";
 
 function isRetryableError(err) {

@@ -1,6 +1,6 @@
-import { streamGemini } from "./gemini";
-import { streamGroq } from "./groq";
-import { streamOpenRouter } from "./openrouter";
+import { streamGemini } from "./gemini.js";
+import { streamGroq } from "./groq.js";
+import { streamOpenRouter } from "./openrouter.js";
 
 export function runProvider({
     model,
