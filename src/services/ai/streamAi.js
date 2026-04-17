@@ -50,7 +50,7 @@ const streamAi = ({
 
         const model = resolveModel(currentModelKey);
 
-        console.log(`🚀 Trying model: ${modelKey} (${model.provider})`);
+        console.log(`🚀 Trying model: ${currentModelKey} (${model.provider})`);
 
         let prompt = null;
         let systemInstruction = null;
@@ -85,21 +85,20 @@ const streamAi = ({
             onEnd,
 
             onError: (err) => {
-                console.log(`❌ ${modelKey} failed:`, err.message);
+                console.log(`❌ ${currentModelKey} failed:`, err.message);
 
                 if (!isRetryableError(err) || hasStartedStreaming) {
                     onError?.(err);
                     return;
                 }
 
-                console.log(`🔁 Falling back from ${modelKey}`);
+                console.log(`🔁 Falling back from ${currentModelKey}`);
                 tryNext();
             }
         })
     }
 
     tryNext()
-
     return currentController;
 }
 
