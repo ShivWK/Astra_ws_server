@@ -1,67 +1,109 @@
+import { TEXT_MODEL_FALLBACK_MAP } from "../../utils/constant.js";
 import { geminiPromptBuilder } from "./geminiPromptBuidler.js";
 import resolveModel from "./modelResolver.js"
 import promptBuilder from "./promptBuilder.js";
 import { streamGemini } from "./providers/gemini.js";
 import { streamGroq } from "./providers/groq.js";
 import { streamOpenRouter } from "./providers/openrouter.js";
+import { runProvider } from "./providers/providerRunnner.js";
+
+function isRetryableError(err) {
+    const msg = err?.message?.toLowerCase() || "";
+
+    return (
+        msg.includes("quota") ||
+        msg.includes("rate") ||
+        msg.includes("timeout") ||
+        msg.includes("500") ||
+        msg.includes("503")
+    );
+}
 
 const streamAi = ({
     conversation,
     history,
     message,
-    onChunk,
+    onChunk: sender,
     onError,
     onEnd,
-    agent
+    agent,
 }) => {
-    const model = resolveModel(conversation.currentAgentModel);
-    let prompt = null;
+    const primaryModelKey = conversation.currentAgentModel;
 
-    if (model.provider !== "gemini") {
-        prompt = promptBuilder({
-            agent,
-            conversation,
-            history,
-            message
-        })
-    }
 
-    console.log("History", history)
-    // console.log("Using model:", model, "and prompt:", prompt);
 
-    if (model.provider === "openrouter") {
-        return streamOpenRouter({
-            model: model.model_id,
+    const fallbackKeys = [
+        primaryModelKey,
+        ...(TEXT_MODEL_FALLBACK_MAP[primaryModelKey] || [])
+    ];
+
+    let attempts = 0;
+    let currentController = null;
+    let hasStartedStreaming = false;
+
+    const tryNext = () => {
+
+        if (attempts >= fallbackKeys.length) {
+            onError?.(new Error("All models failed"));
+            return;
+        }
+
+        const currentModelKey = fallbackKeys[attempts];
+        attempts++;
+
+        const model = resolveModel(currentModelKey);
+
+        console.log(`🚀 Trying model: ${modelKey} (${model.provider})`);
+
+        let prompt = null;
+        let systemInstruction = null;
+        let historyData = null;
+
+
+        if (model.provider === "gemini") {
+            const geminiData = geminiPromptBuilder(agent, history, conversation);
+            systemInstruction = geminiData.systemInstruction;
+            historyData = geminiData.historyData;
+        } else {
+            prompt = promptBuilder({
+                agent,
+                conversation,
+                history,
+                message
+            })
+        }
+
+        currentController = runProvider({
+            model,
             prompt,
-            onChunk,
-            onEnd,
-            onError
-        })
-    }
-
-    if (model.provider === "groq") {
-        return streamGroq({
-            model: model.model_id,
-            prompt,
-            onChunk,
-            onError,
-            onEnd,
-        })
-    }
-
-    if (model.provider === "gemini") {
-        const { systemInstruction, historyData } = geminiPromptBuilder(agent, history, conversation);
-
-        return streamGemini({
-            model: model.model_id,
             systemInstruction,
             history: historyData || [],
-            prompt: message,
-            onChunk,
-            onError,
+            message,
+
+            onChunk: (chunk) => {
+                hasStartedStreaming = true;
+                sender(chunk)
+            },
+
             onEnd,
+
+            onError: (err) => {
+                console.log(`❌ ${modelKey} failed:`, err.message);
+
+                if (!isRetryableError(err) || hasStartedStreaming) {
+                    onError?.(err);
+                    return;
+                }
+
+                console.log(`🔁 Falling back from ${modelKey}`);
+                tryNext();
+            }
         })
     }
+
+    tryNext()
+
+    return currentController;
 }
 
 export default streamAi;
