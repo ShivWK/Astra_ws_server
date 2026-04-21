@@ -27,8 +27,6 @@ const streamAi = ({
 }) => {
     const primaryModelKey = conversation.currentAgentModel;
 
-
-
     const fallbackKeys = [
         primaryModelKey,
         ...(TEXT_MODEL_FALLBACK_MAP[primaryModelKey] || [])
@@ -37,11 +35,10 @@ const streamAi = ({
     let attempts = 0;
     let currentController = null;
     let hasStartedStreaming = false;
-
     const tryNext = () => {
 
         if (attempts >= fallbackKeys.length) {
-            onError?.(new Error("All models failed"));
+            onError?.(new Error("All models failed. Please try after sometime."));
             return;
         }
 
@@ -88,6 +85,7 @@ const streamAi = ({
                 console.log(`❌ ${currentModelKey} failed:`, err.message);
 
                 if (!isRetryableError(err) || hasStartedStreaming) {
+                    console.log("Not retryable")
                     onError?.(err);
                     return;
                 }

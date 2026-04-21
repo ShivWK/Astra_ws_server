@@ -16,23 +16,23 @@ const startServer = async () => {
         }))
 
         ws.on("message", async (msg) => {
+            console.log("message", msg)
+
             try {
-                const parsed = JSON.parse(msg.toString());
-                console.log("parsed data", parsed)
+                const parsed = JSON.parse(msg);
 
                 if (parsed.type === "text_message") {
-                    await textHandler(parsed, ws)
+                    await textHandler(parsed, ws);
                 }
 
                 if (parsed.type === "stop") {
                     ws.controller?.abort();
-
-                    ws.send(JSON.stringify({
-                        type: 'stopped'
-                    }))
+                    ws.send(JSON.stringify({ type: 'stopped' }));
                 }
-            } catch (err) {
-                console.error(err)
+
+                return;
+            } catch {
+                console.log("Raw data received");
             }
         })
 
