@@ -54,8 +54,6 @@ const textHandler = async (data, ws) => {
                 const finalResponse = fullResponse.trim() ||
                     "Something went wrong. Please try again.";
 
-                console.log("Saving AI response:", fullResponse);
-
                 await saveMessage({
                     conversationId,
                     role: "assistant",

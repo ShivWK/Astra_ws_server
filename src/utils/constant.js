@@ -1,12 +1,12 @@
 export const TEXT_MODEL_FALLBACK_MAP = {
-  // 🔵 GROQ models
+  // GROQ models
   fast: ["powerful", "conversational"],
   smart: ["powerful", "conversational"],
 
-  // 🟣 GEMINI
+  // GEMINI
   powerful: ["smart", "conversational"],
 
-  // 🟠 OPENROUTER
+  // OPENROUTER
   logic: ["powerful", "smart"],
   conversational: ["powerful", "smart"],
 };

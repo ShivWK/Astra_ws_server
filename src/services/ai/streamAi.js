@@ -35,6 +35,7 @@ const streamAi = ({
     let attempts = 0;
     let currentController = null;
     let hasStartedStreaming = false;
+
     const tryNext = () => {
 
         if (attempts >= fallbackKeys.length) {
@@ -46,8 +47,6 @@ const streamAi = ({
         attempts++;
 
         const model = resolveModel(currentModelKey);
-
-        console.log(`🚀 Trying model: ${currentModelKey} (${model.provider})`);
 
         let prompt = null;
         let systemInstruction = null;
@@ -85,7 +84,6 @@ const streamAi = ({
                 console.log(`❌ ${currentModelKey} failed:`, err.message);
 
                 if (!isRetryableError(err) || hasStartedStreaming) {
-                    console.log("Not retryable")
                     onError?.(err);
                     return;
                 }
