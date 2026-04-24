@@ -1,4 +1,5 @@
 import { ConversationModel } from "../models/conversation.model.js";
+import { UserModel } from "../models/user.model.js";
 import { UserAgentsModel } from "../models/userAgent.model.js";
 import streamAi from "../services/ai/streamAi.js";
 import updateConversation from "../services/conversation/updateConversation.js";
@@ -9,7 +10,7 @@ const textHandler = async (data, ws) => {
     const { message, conversationId } = data;
 
     const conversation = await ConversationModel.findById(conversationId);
-    if (!conversation) {
+    if (!conversation || conversation.userId.toString() !== ws.user._id.toString()) {
         ws.send(JSON.stringify({
             type: "error",
             message: "Invalid conversation"
@@ -29,6 +30,7 @@ const textHandler = async (data, ws) => {
     const history = await getHistory({ conversationId, limit: 10 })
     let fullResponse = "";
     let isAborted = false;
+    let isCharged = false;
 
     ws.send(JSON.stringify({
         type: "ai_start"
@@ -63,6 +65,21 @@ const textHandler = async (data, ws) => {
                 await updateConversation(conversationId);
             }
 
+            if (ws.user.role !== "admin" && fullResponse.length > 0 && !isCharged) {
+                isCharged = true;
+
+                const tokenUsed = Math.ceil(fullResponse.length / 4);
+
+                await UserModel.findByIdAndUpdate(ws.user._id, {
+                    $inc: { token: -tokenUsed }
+                });
+
+                ws.send(JSON.stringify({
+                    type: "usage",
+                    tokensUsed: tokenUsed
+                }));
+            }
+
             ws.send(JSON.stringify({ type: "ai_end" }))
         },
 
@@ -77,9 +94,27 @@ const textHandler = async (data, ws) => {
     })
 
     ws.controller = {
-        abort: () => {
+        abort: async () => {
             isAborted = true;
             controller.abort();
+
+            if (fullResponse.length > 0 && ws.user.role !== "admin" && !isCharged) {
+                isCharged = true;
+
+                const tokenUsed = Math.ceil(fullResponse.length / 4);
+                await UserModel.findByIdAndUpdate(ws.user._id, {
+                    $inc: { token: -tokenUsed }
+                });
+
+                ws.user.token -= tokenUsed;
+
+                ws.send(JSON.stringify({
+                    type: "usage",
+                    tokensUsed: tokenUsed
+                }));
+            }
+
+            ws.send(JSON.stringify({ type: "ai_end" }));
         }
     };
 }
