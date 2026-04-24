@@ -16,8 +16,6 @@ const startServer = async () => {
         }))
 
         ws.on("message", async (msg) => {
-            console.log("message", msg)
-
             try {
                 const parsed = JSON.parse(msg);
 

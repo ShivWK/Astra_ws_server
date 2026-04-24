@@ -27,7 +27,7 @@ function resolveModel(modelKey) {
     case "conversational":
       return {
         provider: "openrouter",
-        model_id: "arcee-ai/trinity-large-preview:free",
+        model_id: "google/gemma-3-12b-it",
       };
 
     default:

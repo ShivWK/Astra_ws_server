@@ -84,6 +84,7 @@ const streamAi = ({
                 console.log(`❌ ${currentModelKey} failed:`, err.message);
 
                 if (!isRetryableError(err) || hasStartedStreaming) {
+                    console.log(`🚫 Not retrying due to error type or because streaming has already started.`);
                     onError?.(err);
                     return;
                 }
