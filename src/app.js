@@ -42,8 +42,7 @@ const startServer = async () => {
                     type: "error",
                     message: "Insufficient tokens"
                 }));
-                ws.close();
-
+                
                 return;
             }
 
