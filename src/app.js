@@ -14,7 +14,7 @@ const startServer = async () => {
         console.log('🟢 Client connected');
 
         try {
-            const url = new URL(req.url, process.env.SITEURL);
+            const url = new URL(req.url, `http://${req.headers.host}`);
             const token = url.searchParams.get("token");
 
             if (!token) {
@@ -22,7 +22,6 @@ const startServer = async () => {
             }
 
             const decoded = jwt.verify(token, process.env.SECRETE_KEY);
-            // console.log(`User ${JSON.stringify(decoded)}`);
 
             if (!decoded || !decoded.id) {
                 throw new Error("Invalid token");
@@ -43,11 +42,16 @@ const startServer = async () => {
                     type: "error",
                     message: "Insufficient tokens"
                 }));
+                ws.close();
 
                 return;
             }
 
-            ws.user = user;
+            ws.user = {
+                _id: user._id,
+                role: user.role,
+                token: user.token
+            };
         } catch (err) {
             console.error("Invalid URL:", err);
             ws.send(JSON.stringify({
@@ -64,7 +68,7 @@ const startServer = async () => {
 
         ws.on("message", async (msg) => {
             try {
-                const parsed = JSON.parse(msg);
+                const parsed = JSON.parse(msg.toString());
 
                 if (parsed.type === "text_message") {
                     await textHandler(parsed, ws);
@@ -77,7 +81,7 @@ const startServer = async () => {
 
                 return;
             } catch {
-                console.log("Raw data received");
+                 console.log("Invalid message:", err.message);
             }
         })
 
@@ -92,7 +96,7 @@ const startServer = async () => {
         })
     })
 
-    console.log("🚀 WS Server running on 8080");
+    console.log(`🚀 WS Server running on ${process.env.PORT}`);
 }
 
 startServer();
