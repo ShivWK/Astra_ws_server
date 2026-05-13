@@ -52,7 +52,6 @@ const streamAi = ({
         let systemInstruction = null;
         let historyData = null;
 
-
         if (model.provider === "gemini") {
             const geminiData = geminiPromptBuilder(agent, history, conversation);
             systemInstruction = geminiData.systemInstruction;
@@ -70,7 +69,7 @@ const streamAi = ({
             model,
             prompt,
             systemInstruction,
-            history: historyData || [],
+            history: historyData,
             message,
 
             onChunk: (chunk) => {

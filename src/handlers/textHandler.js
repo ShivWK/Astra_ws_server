@@ -5,12 +5,27 @@ import streamAi from "../services/ai/streamAi.js";
 import updateConversation from "../services/conversation/updateConversation.js";
 import getHistory from "../services/message/getHistory.js";
 import { saveMessage } from "../services/message/saveMessage.js";
+import { saveResponse } from "../services/message/saveResponse.js";
+import { finalizeUsage } from "../services/tokens/finalizeUsage.js";
+import { reserveTokens } from "../services/tokens/reserveTokens.js";
 
-const textHandler = async (data, ws) => {
+const textHandler = async (data, userId, ws) => {
     const { message, conversationId } = data;
 
+    const estimatedTokens = Math.max(100, message.length / 4 + 300);
+    const reservedUser = await reserveTokens(userId, estimatedTokens)
+
+    if (!reservedUser) {
+        ws.send(JSON.stringify({
+            type: "error",
+            message: "Insufficient tokens or invalid user"
+        }));
+
+        return;
+    }
+
     const conversation = await ConversationModel.findById(conversationId);
-    if (!conversation || conversation.userId.toString() !== ws.user._id.toString()) {
+    if (!conversation || conversation.userId.toString() !== reservedUser._id.toString()) {
         ws.send(JSON.stringify({
             type: "error",
             message: "Invalid conversation"
@@ -19,18 +34,29 @@ const textHandler = async (data, ws) => {
         return;
     }
 
-    const agent = await UserAgentsModel.findById(conversation.agentId)
-
     await saveMessage({
         conversationId,
         role: "user",
         content: message,
     })
 
+    const agent = await UserAgentsModel.findById(conversation.agentId)
     const history = await getHistory({ conversationId, limit: 10 })
     let fullResponse = "";
     let isAborted = false;
-    let isCharged = false;
+    let isFinalized = false;
+
+    const finalize = async (tokenUsed = 0) => {
+        if (isFinalized) return;
+
+        isFinalized = true;
+
+        await finalizeUsage(
+            tokenUsed,
+            estimatedTokens,
+            reservedUser
+        )
+    }
 
     ws.send(JSON.stringify({
         type: "ai_start"
@@ -38,7 +64,7 @@ const textHandler = async (data, ws) => {
 
     const controller = streamAi({
         conversation,
-        history: history ? history : "",
+        history: history || [],
         message,
         agent,
 
@@ -53,26 +79,13 @@ const textHandler = async (data, ws) => {
 
         onEnd: async () => {
             if (!isAborted) {
-                const finalResponse = fullResponse.trim() ||
-                    "Something went wrong. Please try again.";
-
-                await saveMessage({
-                    conversationId,
-                    role: "assistant",
-                    content: finalResponse,
-                })
-
+                await saveResponse(fullResponse, conversationId)
                 await updateConversation(conversationId);
             }
 
-            if (ws.user.role !== "admin" && fullResponse.length > 0 && !isCharged) {
-                isCharged = true;
-
+            if (reservedUser.role !== "admin" && fullResponse.length > 0 && !isFinalized) {
                 const tokenUsed = Math.ceil(fullResponse.length / 4);
-
-                await UserModel.findByIdAndUpdate(ws.user._id, {
-                    $inc: { token: -tokenUsed }
-                });
+                await finalize(tokenUsed);
 
                 ws.send(JSON.stringify({
                     type: "usage",
@@ -83,30 +96,28 @@ const textHandler = async (data, ws) => {
             ws.send(JSON.stringify({ type: "ai_end" }))
         },
 
-        onError: (err) => {
+        onError: async (err) => {
             isAborted = true;
 
             ws.send(JSON.stringify({
                 type: "error",
                 message: err.message
             }));
+
+            await finalize(0);
         }
     })
 
     ws.controller = {
         abort: async () => {
-            isAborted = true;
             controller.abort();
+            isAborted = true;
 
-            if (fullResponse.length > 0 && ws.user.role !== "admin" && !isCharged) {
-                isCharged = true;
-
+            if (fullResponse.length > 0 && reservedUser.role !== "admin" && !isFinalized) {
                 const tokenUsed = Math.ceil(fullResponse.length / 4);
-                await UserModel.findByIdAndUpdate(ws.user._id, {
-                    $inc: { token: -tokenUsed }
-                });
+                await finalize(tokenUsed);
 
-                ws.user.token -= tokenUsed;
+                await saveResponse(fullResponse, conversationId)
 
                 ws.send(JSON.stringify({
                     type: "usage",

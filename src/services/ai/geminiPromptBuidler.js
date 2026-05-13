@@ -12,10 +12,14 @@ ${agent.userInstruction}
 ### CUSTOM CONTEXT ###
 ${conversation?.customInstruction || "None"}`;
 
-    const historyData = history?.map(data => ({
-        role: data.role === "assistant" ? "model" : "user",
-        parts: [{ text: data.content }]
-    }))
+    let historyData = [];
+
+    if (history) {
+        historyData = history?.map(data => ({
+            role: data.role === "assistant" ? "model" : "user",
+            parts: [{ text: data.content }]
+        }))
+    }
 
     return {
         systemInstruction,

@@ -12,6 +12,7 @@ const startServer = async () => {
 
     wss.on("connection", async (ws, req) => {
         console.log('🟢 Client connected');
+        let userId = null;
 
         try {
             const url = new URL(req.url, `http://${req.headers.host}`);
@@ -31,26 +32,7 @@ const startServer = async () => {
                 throw new Error("Token expired");
             }
 
-            const user = await UserModel.findById(decoded.id);
-
-            if (!user) {
-                throw new Error("User not found");
-            }
-
-            if (user.role !== "admin" && user.token <= 0) {
-                ws.send(JSON.stringify({
-                    type: "error",
-                    message: "Insufficient tokens"
-                }));
-                
-                return;
-            }
-
-            ws.user = {
-                _id: user._id,
-                role: user.role,
-                token: user.token
-            };
+            userId = decoded.id;
         } catch (err) {
             console.error("Invalid URL:", err);
             ws.send(JSON.stringify({
@@ -66,11 +48,12 @@ const startServer = async () => {
         }))
 
         ws.on("message", async (msg) => {
+
             try {
                 const parsed = JSON.parse(msg.toString());
 
                 if (parsed.type === "text_message") {
-                    await textHandler(parsed, ws);
+                    await textHandler(parsed, userId, ws);
                 }
 
                 if (parsed.type === "stop") {
@@ -79,8 +62,8 @@ const startServer = async () => {
                 }
 
                 return;
-            } catch {
-                 console.log("Invalid message:", err.message);
+            } catch (err) {
+                console.log("Invalid message:", err.message);
             }
         })
 
@@ -90,6 +73,7 @@ const startServer = async () => {
         })
 
         ws.on("close", () => {
+            ws.send(JSON.stringify({ type: "ai_end" }));
             console.log("🔴 Client disconnected");
             ws.controller?.abort();
         })
