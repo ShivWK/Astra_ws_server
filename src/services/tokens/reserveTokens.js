@@ -1,7 +1,7 @@
 import { UserModel } from "../../models/user.model.js";
 
 export async function reserveTokens(userId, estimatedTokens) {
-    const user = await UserModel.findOneAndReplace({
+    const user = await UserModel.findOneAndUpdate({
         _id: userId,
         role: { $ne: "admin" },
 
