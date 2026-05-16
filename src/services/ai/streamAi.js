@@ -24,6 +24,7 @@ const streamAi = ({
     onError,
     onEnd,
     agent,
+    userName,
 }) => {
     const primaryModelKey = conversation.currentAgentModel;
 
@@ -53,7 +54,7 @@ const streamAi = ({
         let historyData = null;
 
         if (model.provider === "gemini") {
-            const geminiData = geminiPromptBuilder(agent, history, conversation);
+            const geminiData = geminiPromptBuilder(agent, history, conversation, userName);
             systemInstruction = geminiData.systemInstruction;
             historyData = geminiData.historyData;
         } else {
@@ -61,7 +62,8 @@ const streamAi = ({
                 agent,
                 conversation,
                 history,
-                message
+                message,
+                userName
             })
         }
 

@@ -67,6 +67,7 @@ const textHandler = async (data, userId, ws) => {
         history: history || [],
         message,
         agent,
+        userName: ws.user.name,
 
         onChunk: (chunk) => {
             fullResponse += chunk;

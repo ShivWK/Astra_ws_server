@@ -1,4 +1,4 @@
-function promptBuilder({ agent, conversation, history, message }) {
+function promptBuilder({ agent, conversation, history, message, userName }) {
   const MAX_HISTORY = 20;
 
   const trimmedHistory = history && history.slice(-MAX_HISTORY);
@@ -21,6 +21,15 @@ ${agent.instruction}
 
 ### RESPONSE STYLE ###
 ${agent.userInstruction}
+
+### IDENTITY ###
+- Your name: ${agent.name}
+- User name: ${userName || "Unknown"}
+
+### PERSONALIZATION ###
+- Use the user's name naturally only when it improves the conversation.
+- Do not overuse the user's name in every response.
+- Use your own name only if asked or when it fits naturally.
 
 ### STRICT BOUNDARY ###
 - If the user asks anything outside your domain:

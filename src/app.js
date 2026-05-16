@@ -35,7 +35,6 @@ const startServer = async () => {
             userId = decoded.id;
 
             const user = await UserModel.findById(userId);
-
             if (!user) {
                 ws.send(JSON.stringify({
                     type: "error",
@@ -45,6 +44,8 @@ const startServer = async () => {
                 ws.close();
                 return;
             }
+
+            ws.user.name = user.name;
         } catch (err) {
             console.error("Invalid URL:", err);
             ws.send(JSON.stringify({
