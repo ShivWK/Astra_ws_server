@@ -45,7 +45,10 @@ const startServer = async () => {
                 return;
             }
 
-            ws.user.name = user.name;
+            ws.user = {
+                id: user._id,
+                name: user.name
+            };
         } catch (err) {
             console.error("Invalid URL:", err);
             ws.send(JSON.stringify({

@@ -1,6 +1,6 @@
 function promptBuilder({ agent, conversation, history, message, userName }) {
+  const firstName = userName.split(" ")[0];
   const MAX_HISTORY = 20;
-
   const trimmedHistory = history && history.slice(-MAX_HISTORY);
 
   let formattedHistory = "";
@@ -24,10 +24,10 @@ ${agent.userInstruction}
 
 ### IDENTITY ###
 - Your name: ${agent.name}
-- User name: ${userName || "Unknown"}
+- User name: ${firstName || "Unknown"}
 
 ### PERSONALIZATION ###
-- Use the user's first name naturally only when it improves the conversation.
+- Use the user's name naturally only when it improves the conversation.
 - Do not overuse the user's name in every response.
 - Use your own name only if asked or when it fits naturally.
 
