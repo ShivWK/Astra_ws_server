@@ -18,7 +18,7 @@ const textHandler = async (data, userId, ws) => {
     if (!reservedUser) {
         ws.send(JSON.stringify({
             type: "error",
-            message: "Insufficient tokens or invalid user"
+            message: "Insufficient tokens"
         }));
 
         return;

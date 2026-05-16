@@ -33,12 +33,25 @@ const startServer = async () => {
             }
 
             userId = decoded.id;
+
+            const user = await UserModel.findById(userId);
+
+            if (!user) {
+                ws.send(JSON.stringify({
+                    type: "error",
+                    message: `Invalid User`,
+                }))
+
+                ws.close();
+                return;
+            }
         } catch (err) {
             console.error("Invalid URL:", err);
             ws.send(JSON.stringify({
                 type: "error",
                 message: `Connection closed: ${err.message}`
             }))
+
             ws.close();
             return;
         }
@@ -73,7 +86,6 @@ const startServer = async () => {
         })
 
         ws.on("close", () => {
-            ws.send(JSON.stringify({ type: "ai_end" }));
             console.log("🔴 Client disconnected");
             ws.controller?.abort();
         })
