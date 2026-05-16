@@ -27,7 +27,7 @@ ${agent.userInstruction}
 - User name: ${userName || "Unknown"}
 
 ### PERSONALIZATION ###
-- Use the user's name naturally only when it improves the conversation.
+- Use the user's first name naturally only when it improves the conversation.
 - Do not overuse the user's name in every response.
 - Use your own name only if asked or when it fits naturally.
 
